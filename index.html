@@ -1,1027 +1,1331 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#0a0a0a">
-  <title>Hangboard Timer</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-    
-    :root {
-      --bg: #0a0a0a;
-      --surface: #141414;
-      --surface-elevated: #1a1a1a;
-      --border: #2a2a2a;
-      --text: #f5f5f5;
-      --text-dim: #888;
-      --accent: #ff6b35;
-      --accent-glow: rgba(255, 107, 53, 0.3);
-      --success: #4ade80;
-      --rest: #3b82f6;
-      --work: #ff6b35;
-    }
-    
-    body {
-      font-family: 'Space Grotesk', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      min-height: 100dvh;
-      overflow-x: hidden;
-    }
-    
-    .app {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 16px;
-      padding-bottom: 100px;
-    }
-    
-    .header {
-      text-align: center;
-      padding: 20px 0 30px;
-    }
-    
-    .header h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 4px;
-    }
-    
-    .header p {
-      color: var(--text-dim);
-      font-size: 0.85rem;
-    }
-    
-    /* Timer Display */
-    .timer-container {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 30px 20px;
-      margin-bottom: 20px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .timer-container.working {
-      border-color: var(--work);
-      box-shadow: 0 0 40px var(--accent-glow);
-    }
-    
-    .timer-container.resting {
-      border-color: var(--rest);
-      box-shadow: 0 0 40px rgba(59, 130, 246, 0.2);
-    }
-    
-    .exercise-image {
-      width: 120px;
-      height: 120px;
-      border-radius: 12px;
-      object-fit: cover;
-      margin-bottom: 16px;
-      border: 2px solid var(--border);
-    }
-    
-    .exercise-image-placeholder {
-      width: 120px;
-      height: 120px;
-      border-radius: 12px;
-      background: var(--surface-elevated);
-      border: 2px dashed var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 16px;
-      color: var(--text-dim);
-      font-size: 0.75rem;
-    }
-    
-    .current-exercise {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    
-    .set-info {
-      color: var(--text-dim);
-      font-size: 0.9rem;
-      margin-bottom: 20px;
-    }
-    
-    .phase-label {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 8px;
-    }
-    
-    .phase-label.work { color: var(--work); }
-    .phase-label.rest { color: var(--rest); }
-    
-    .timer-display {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 5rem;
-      font-weight: 700;
-      line-height: 1;
-      margin-bottom: 20px;
-    }
-    
-    .progress-bar {
-      height: 6px;
-      background: var(--surface-elevated);
-      border-radius: 3px;
-      overflow: hidden;
-      margin-bottom: 20px;
-    }
-    
-    .progress-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.1s linear;
-    }
-    
-    .progress-fill.work { background: var(--work); }
-    .progress-fill.rest { background: var(--rest); }
-    
-    .overall-progress {
-      color: var(--text-dim);
-      font-size: 0.8rem;
-    }
-    
-    /* Control Buttons */
-    .controls {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 30px;
-    }
-    
-    .btn {
-      flex: 1;
-      padding: 16px 24px;
-      border: none;
-      border-radius: 12px;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .btn-primary {
-      background: var(--accent);
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      filter: brightness(1.1);
-    }
-    
-    .btn-primary:active {
-      transform: scale(0.98);
-    }
-    
-    .btn-secondary {
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    
-    .btn-secondary:hover {
-      background: var(--surface-elevated);
-    }
-    
-    .btn-danger {
-      background: #dc2626;
-      color: white;
-    }
-    
-    /* Tabs */
-    .tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-      background: var(--surface);
-      padding: 6px;
-      border-radius: 12px;
-    }
-    
-    .tab {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: transparent;
-      color: var(--text-dim);
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .tab.active {
-      background: var(--surface-elevated);
-      color: var(--text);
-    }
-    
-    /* Exercise List */
-    .exercise-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    
-    .exercise-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-    
-    .exercise-card.active {
-      border-color: var(--accent);
-    }
-    
-    .exercise-card.completed {
-      opacity: 0.5;
-    }
-    
-    .exercise-thumb {
-      width: 50px;
-      height: 50px;
-      border-radius: 8px;
-      object-fit: cover;
-      background: var(--surface-elevated);
-      flex-shrink: 0;
-    }
-    
-    .exercise-thumb-placeholder {
-      width: 50px;
-      height: 50px;
-      border-radius: 8px;
-      background: var(--surface-elevated);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      color: var(--text-dim);
-      font-size: 0.7rem;
-    }
-    
-    .exercise-details {
-      flex: 1;
-      min-width: 0;
-    }
-    
-    .exercise-name {
-      font-weight: 600;
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    
-    .exercise-meta {
-      color: var(--text-dim);
-      font-size: 0.8rem;
-    }
-    
-    .exercise-status {
-      font-size: 0.75rem;
-      padding: 4px 8px;
-      border-radius: 6px;
-      background: var(--surface-elevated);
-      color: var(--text-dim);
-    }
-    
-    .exercise-status.done {
-      background: rgba(74, 222, 128, 0.1);
-      color: var(--success);
-    }
-    
-    /* Settings Panel */
-    .settings-section {
-      margin-bottom: 24px;
-    }
-    
-    .settings-title {
-      font-size: 0.85rem;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 12px;
-    }
-    
-    .setting-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    
-    .setting-label {
-      font-weight: 500;
-    }
-    
-    .setting-input {
-      width: 80px;
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface);
-      color: var(--text);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 1rem;
-      text-align: center;
-    }
-    
-    .setting-input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    
-    /* Edit Exercise Modal */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 100;
-    }
-    
-    .modal {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      width: 100%;
-      max-width: 400px;
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 24px;
-    }
-    
-    .modal h2 {
-      font-size: 1.25rem;
-      margin-bottom: 20px;
-    }
-    
-    .form-group {
-      margin-bottom: 16px;
-    }
-    
-    .form-label {
-      display: block;
-      font-size: 0.85rem;
-      color: var(--text-dim);
-      margin-bottom: 6px;
-    }
-    
-    .form-input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface-elevated);
-      color: var(--text);
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1rem;
-    }
-    
-    .form-input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    
-    .image-upload {
-      width: 100%;
-      height: 120px;
-      border: 2px dashed var(--border);
-      border-radius: 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      overflow: hidden;
-    }
-    
-    .image-upload:hover {
-      border-color: var(--accent);
-    }
-    
-    .image-upload img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    
-    .image-upload-text {
-      color: var(--text-dim);
-      font-size: 0.85rem;
-    }
-    
-    .modal-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 24px;
-    }
-    
-    .add-exercise-btn {
-      width: 100%;
-      padding: 16px;
-      border: 2px dashed var(--border);
-      border-radius: 12px;
-      background: transparent;
-      color: var(--text-dim);
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-top: 12px;
-    }
-    
-    .add-exercise-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-    
-    /* Audio context */
-    .audio-init {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 200;
-    }
-    
-    .audio-init-content {
-      text-align: center;
-      padding: 40px;
-    }
-    
-    .audio-init-content h2 {
-      font-size: 1.5rem;
-      margin-bottom: 12px;
-    }
-    
-    .audio-init-content p {
-      color: var(--text-dim);
-      margin-bottom: 24px;
-    }
-    
-    /* Responsive */
-    @media (max-width: 360px) {
-      .timer-display {
-        font-size: 4rem;
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="theme-color" content="#0a0a0a" />
+    <title>Hangboard Timer</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
       }
-    }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-  
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  
-  <script type="text/babel">
-    const { useState, useEffect, useRef, useCallback } = React;
-    
-    const defaultExercises = [
-      { id: 1, name: "Half Crimp", grip: "20mm", sets: 6, image: null },
-      { id: 2, name: "Three Finger Drag", grip: "30mm", sets: 6, image: null },
-      { id: 3, name: "IM Drag", grip: "30mm", sets: 2, image: null },
-      { id: 4, name: "MR Drag", grip: "30mm", sets: 2, image: null },
-      { id: 5, name: "IM Half Crimp", grip: "20mm", sets: 2, image: null },
-      { id: 6, name: "MR Half Crimp", grip: "20mm", sets: 2, image: null },
-    ];
-    
-    function App() {
-      const [exercises, setExercises] = useState(() => {
-        const saved = localStorage.getItem('hangboard-exercises');
-        return saved ? JSON.parse(saved) : defaultExercises;
-      });
-      const [workTime, setWorkTime] = useState(() => {
-        return parseInt(localStorage.getItem('hangboard-worktime')) || 10;
-      });
-      const [restTime, setRestTime] = useState(() => {
-        return parseInt(localStorage.getItem('hangboard-resttime')) || 20;
-      });
-      
-      const [activeTab, setActiveTab] = useState('timer');
-      const [isRunning, setIsRunning] = useState(false);
-      const [isPaused, setIsPaused] = useState(false);
-      const [currentExercise, setCurrentExercise] = useState(0);
-      const [currentSet, setCurrentSet] = useState(1);
-      const [phase, setPhase] = useState('work'); // 'work' or 'rest'
-      const [timeLeft, setTimeLeft] = useState(workTime);
-      const [editingExercise, setEditingExercise] = useState(null);
-      const [audioReady, setAudioReady] = useState(false);
-      
-      const audioContext = useRef(null);
-      const intervalRef = useRef(null);
-      
-      // Save to localStorage
-      useEffect(() => {
-        localStorage.setItem('hangboard-exercises', JSON.stringify(exercises));
-      }, [exercises]);
-      
-      useEffect(() => {
-        localStorage.setItem('hangboard-worktime', workTime.toString());
-      }, [workTime]);
-      
-      useEffect(() => {
-        localStorage.setItem('hangboard-resttime', restTime.toString());
-      }, [restTime]);
-      
-      // Audio functions
-      const initAudio = () => {
-        audioContext.current = new (window.AudioContext || window.webkitAudioContext)();
-        setAudioReady(true);
-      };
-      
-      const playBeep = useCallback((frequency = 800, duration = 150) => {
-        if (!audioContext.current) return;
-        const oscillator = audioContext.current.createOscillator();
-        const gainNode = audioContext.current.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.current.destination);
-        oscillator.frequency.value = frequency;
-        oscillator.type = 'sine';
-        gainNode.gain.setValueAtTime(0.3, audioContext.current.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.current.currentTime + duration / 1000);
-        oscillator.start(audioContext.current.currentTime);
-        oscillator.stop(audioContext.current.currentTime + duration / 1000);
-      }, []);
-      
-      const playCountdown = useCallback(() => {
-        playBeep(600, 100);
-      }, [playBeep]);
-      
-      const playStart = useCallback(() => {
-        playBeep(1000, 200);
-      }, [playBeep]);
-      
-      const playFinish = useCallback(() => {
-        playBeep(1200, 300);
-        setTimeout(() => playBeep(1200, 300), 150);
-      }, [playBeep]);
-      
-      // Timer logic
-      useEffect(() => {
-        if (isRunning && !isPaused) {
-          intervalRef.current = setInterval(() => {
-            setTimeLeft(prev => {
-              if (prev <= 4 && prev > 1) {
-                playCountdown();
-              }
-              if (prev <= 1) {
-                // Time's up, move to next phase
-                if (phase === 'work') {
-                  // Check if this is the last set of the last exercise
-                  const isLastSet = currentSet >= exercises[currentExercise].sets;
-                  const isLastExercise = currentExercise >= exercises.length - 1;
-                  
+
+      :root {
+        --bg: #0a0a0a;
+        --surface: #111;
+        --surface-elevated: #1a1a1a;
+        --border: #2a2a2a;
+        --text: #f5f5f5;
+        --text-dim: #777;
+        --accent: #ff6b35;
+        --accent-glow: rgba(255, 107, 53, 0.25);
+        --success: #4ade80;
+        --rest: #3b82f6;
+        --rest-glow: rgba(59, 130, 246, 0.25);
+        --work: #ff6b35;
+      }
+
+      body {
+        font-family: "Space Grotesk", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        min-height: 100dvh;
+        overflow-x: hidden;
+      }
+
+      .app {
+        max-width: 480px;
+        margin: 0 auto;
+        padding: 16px;
+        padding-bottom: 100px;
+      }
+
+      .app.fullscreen {
+        padding: 12px;
+        padding-top: env(safe-area-inset-top, 12px);
+        padding-bottom: env(safe-area-inset-bottom, 12px);
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100vh;
+        max-height: 100dvh;
+        overflow: hidden;
+      }
+
+      .header {
+        text-align: center;
+        padding: 20px 0 30px;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 4px;
+      }
+
+      .header p {
+        color: var(--text-dim);
+        font-size: 0.85rem;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      /* Timer Display */
+      .timer-container {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 24px 20px;
+        margin-bottom: 20px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .timer-container.fullscreen-timer {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        border-radius: 24px;
+        padding: 24px 20px;
+        min-height: 0;
+      }
+
+      .timer-container.working {
+        border-color: var(--work);
+        box-shadow:
+          0 0 60px var(--accent-glow),
+          inset 0 0 60px rgba(255, 107, 53, 0.03);
+      }
+
+      .timer-container.resting {
+        border-color: var(--rest);
+        box-shadow:
+          0 0 60px var(--rest-glow),
+          inset 0 0 60px rgba(59, 130, 246, 0.03);
+      }
+
+      /* Fullscreen timer sections */
+      .timer-top {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+
+      .timer-middle {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        width: 100%;
+      }
+
+      .timer-bottom {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+
+      /* Exercise name on top - BIGGER */
+      .current-exercise {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+
+      .current-exercise.fullscreen-title {
+        font-size: 2rem;
+        margin-bottom: 2px;
+      }
+
+      .grip-label {
+        color: var(--text-dim);
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 12px;
+      }
+
+      .exercise-image {
+        width: 180px;
+        height: 180px;
+        border-radius: 16px;
+        object-fit: cover;
+        margin-bottom: 16px;
+        border: 2px solid var(--border);
+        display: block;
+      }
+
+      .exercise-image.fullscreen-image {
+        width: 160px;
+        height: 160px;
+        border-radius: 20px;
+        margin-bottom: 0;
+        border: 3px solid var(--border);
+      }
+
+      .exercise-image-placeholder {
+        width: 180px;
+        height: 180px;
+        border-radius: 16px;
+        background: var(--surface-elevated);
+        border: 2px dashed var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        color: var(--text-dim);
+        font-size: 0.85rem;
+      }
+
+      .exercise-image-placeholder.fullscreen-image {
+        width: 160px;
+        height: 160px;
+        border-radius: 20px;
+        margin: 0;
+      }
+
+      /* Set info - MUCH LARGER */
+      .set-info {
+        color: var(--text);
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+      }
+
+      .set-info.fullscreen-set {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        margin-top: 16px;
+      }
+
+      /* Phase label - LARGER */
+      .phase-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 8px;
+      }
+
+      .phase-label.fullscreen-phase {
+        font-size: 1.25rem;
+        margin-bottom: 0;
+        letter-spacing: 0.2em;
+      }
+
+      .phase-label.work {
+        color: var(--work);
+      }
+      .phase-label.rest {
+        color: var(--rest);
+      }
+
+      .timer-display {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 5rem;
+        font-weight: 700;
+        line-height: 1;
+        display: flex;
+        justify-content: center;
+        align-items: baseline;
+        margin-bottom: 16px;
+      }
+
+      .timer-display.fullscreen-time {
+        font-size: 7rem;
+        margin-bottom: 0;
+      }
+
+      .timer-seconds {
+        /* Main seconds */
+      }
+
+      .timer-tenths {
+        font-size: 2.5rem;
+        font-weight: 400;
+        color: var(--text-dim);
+        margin-left: 4px;
+      }
+
+      .timer-tenths.fullscreen-tenths {
+        font-size: 3.5rem;
+        margin-left: 2px;
+      }
+
+      .progress-bar {
+        height: 8px;
+        background: var(--surface-elevated);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 20px;
+      }
+
+      .progress-bar.fullscreen-progress {
+        width: 100%;
+        height: 6px;
+        margin-bottom: 12px;
+        border-radius: 3px;
+      }
+
+      .progress-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.05s linear;
+      }
+
+      .progress-fill.work {
+        background: var(--work);
+      }
+      .progress-fill.rest {
+        background: var(--rest);
+      }
+
+      .overall-progress {
+        color: var(--text-dim);
+        font-size: 0.9rem;
+      }
+
+      .overall-progress.fullscreen-overall {
+        font-size: 1rem;
+      }
+
+      .workout-time {
+        color: var(--text-dim);
+        font-size: 0.85rem;
+        margin-top: 8px;
+      }
+
+      /* Control Buttons */
+      .controls {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 30px;
+      }
+
+      .controls.fullscreen-controls {
+        margin-bottom: 0;
+        flex-shrink: 0;
+      }
+
+      .btn {
+        flex: 1;
+        padding: 16px 24px;
+        border: none;
+        border-radius: 12px;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        filter: brightness(1.1);
+      }
+
+      .btn-primary:active {
+        transform: scale(0.98);
+      }
+
+      .btn-secondary {
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
+      .btn-secondary:hover {
+        background: var(--surface-elevated);
+      }
+
+      .btn-danger {
+        background: #dc2626;
+        color: white;
+      }
+
+      /* Tabs */
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        background: var(--surface);
+        padding: 6px;
+        border-radius: 12px;
+      }
+
+      .tab {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--text-dim);
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .tab.active {
+        background: var(--surface-elevated);
+        color: var(--text);
+      }
+
+      /* Exercise List */
+      .exercise-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .exercise-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .exercise-card.active {
+        border-color: var(--accent);
+      }
+
+      .exercise-card.completed {
+        opacity: 0.5;
+      }
+
+      .exercise-thumb {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: var(--surface-elevated);
+        flex-shrink: 0;
+      }
+
+      .exercise-thumb-placeholder {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        background: var(--surface-elevated);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: var(--text-dim);
+        font-size: 0.7rem;
+      }
+
+      .exercise-details {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .exercise-name {
+        font-weight: 600;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .exercise-meta {
+        color: var(--text-dim);
+        font-size: 0.8rem;
+      }
+
+      .exercise-status {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 6px;
+        background: var(--surface-elevated);
+        color: var(--text-dim);
+      }
+
+      .exercise-status.done {
+        background: rgba(74, 222, 128, 0.1);
+        color: var(--success);
+      }
+
+      /* Settings Panel */
+      .settings-section {
+        margin-bottom: 24px;
+      }
+
+      .settings-title {
+        font-size: 0.85rem;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 12px;
+      }
+
+      .setting-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .setting-label {
+        font-weight: 500;
+      }
+
+      .setting-input {
+        width: 80px;
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 1rem;
+        text-align: center;
+      }
+
+      .setting-input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      /* Edit Exercise Modal */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 100;
+      }
+
+      .modal {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        width: 100%;
+        max-width: 400px;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 24px;
+      }
+
+      .modal h2 {
+        font-size: 1.25rem;
+        margin-bottom: 20px;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-label {
+        display: block;
+        font-size: 0.85rem;
+        color: var(--text-dim);
+        margin-bottom: 6px;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface-elevated);
+        color: var(--text);
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 1rem;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .image-upload {
+        width: 100%;
+        height: 120px;
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        overflow: hidden;
+      }
+
+      .image-upload:hover {
+        border-color: var(--accent);
+      }
+
+      .image-upload img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .image-upload-text {
+        color: var(--text-dim);
+        font-size: 0.85rem;
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .add-exercise-btn {
+        width: 100%;
+        padding: 16px;
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        background: transparent;
+        color: var(--text-dim);
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 12px;
+      }
+
+      .add-exercise-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* Responsive - smaller screens */
+      @media (max-height: 700px) {
+        .timer-display.fullscreen-time {
+          font-size: 5.5rem;
+        }
+        .timer-tenths.fullscreen-tenths {
+          font-size: 2.75rem;
+        }
+        .exercise-image.fullscreen-image,
+        .exercise-image-placeholder.fullscreen-image {
+          width: 120px;
+          height: 120px;
+        }
+        .current-exercise.fullscreen-title {
+          font-size: 1.5rem;
+        }
+        .set-info.fullscreen-set {
+          font-size: 1.25rem;
+          margin-top: 8px;
+        }
+      }
+
+      /* Larger screens */
+      @media (min-height: 850px) {
+        .timer-display.fullscreen-time {
+          font-size: 8rem;
+        }
+        .timer-tenths.fullscreen-tenths {
+          font-size: 4rem;
+        }
+        .exercise-image.fullscreen-image,
+        .exercise-image-placeholder.fullscreen-image {
+          width: 180px;
+          height: 180px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+      const { useState, useEffect, useRef } = React;
+
+      const defaultExercises = [
+        { id: 1, name: "Half Crimp", grip: "20mm", sets: 6, image: null },
+        {
+          id: 2,
+          name: "Three Finger Drag",
+          grip: "30mm",
+          sets: 6,
+          image: null,
+        },
+        { id: 3, name: "IM Drag", grip: "30mm", sets: 2, image: null },
+        { id: 4, name: "MR Drag", grip: "30mm", sets: 2, image: null },
+        { id: 5, name: "IM Half Crimp", grip: "20mm", sets: 2, image: null },
+        { id: 6, name: "MR Half Crimp", grip: "20mm", sets: 2, image: null },
+      ];
+
+      function App() {
+        const [exercises, setExercises] = useState(() => {
+          const saved = localStorage.getItem("hangboard-exercises");
+          return saved ? JSON.parse(saved) : defaultExercises;
+        });
+        const [workTime, setWorkTime] = useState(() => {
+          return parseInt(localStorage.getItem("hangboard-worktime")) || 10;
+        });
+        const [restTime, setRestTime] = useState(() => {
+          return parseInt(localStorage.getItem("hangboard-resttime")) || 20;
+        });
+
+        const [activeTab, setActiveTab] = useState("timer");
+        const [isRunning, setIsRunning] = useState(false);
+        const [isPaused, setIsPaused] = useState(false);
+        const [currentExercise, setCurrentExercise] = useState(0);
+        const [currentSet, setCurrentSet] = useState(1);
+        const [phase, setPhase] = useState("work");
+        const [timeLeft, setTimeLeft] = useState(workTime * 1000);
+        const [editingExercise, setEditingExercise] = useState(null);
+
+        const intervalRef = useRef(null);
+
+        // Save to localStorage
+        useEffect(() => {
+          localStorage.setItem(
+            "hangboard-exercises",
+            JSON.stringify(exercises),
+          );
+        }, [exercises]);
+
+        useEffect(() => {
+          localStorage.setItem("hangboard-worktime", workTime.toString());
+        }, [workTime]);
+
+        useEffect(() => {
+          localStorage.setItem("hangboard-resttime", restTime.toString());
+        }, [restTime]);
+
+        // Timer logic
+        useEffect(() => {
+          if (isRunning && !isPaused) {
+            const startTime = Date.now();
+            const startTimeLeft = timeLeft;
+
+            intervalRef.current = setInterval(() => {
+              const elapsed = Date.now() - startTime;
+              const newTimeLeft = Math.max(0, startTimeLeft - elapsed);
+
+              if (newTimeLeft <= 0) {
+                if (phase === "work") {
+                  const isLastSet =
+                    currentSet >= exercises[currentExercise].sets;
+                  const isLastExercise =
+                    currentExercise >= exercises.length - 1;
+
                   if (isLastSet && isLastExercise) {
-                    // Workout complete!
-                    playFinish();
                     setIsRunning(false);
-                    return 0;
+                    setTimeLeft(0);
+                    return;
                   }
-                  
-                  playStart();
-                  setPhase('rest');
-                  return restTime;
+
+                  setPhase("rest");
+                  setTimeLeft(restTime * 1000);
                 } else {
-                  // After rest, move to next set or exercise
-                  const isLastSet = currentSet >= exercises[currentExercise].sets;
-                  
+                  const isLastSet =
+                    currentSet >= exercises[currentExercise].sets;
+
                   if (isLastSet) {
-                    // Move to next exercise
-                    setCurrentExercise(prev => prev + 1);
+                    setCurrentExercise((prev) => prev + 1);
                     setCurrentSet(1);
                   } else {
-                    setCurrentSet(prev => prev + 1);
+                    setCurrentSet((prev) => prev + 1);
                   }
-                  
-                  playStart();
-                  setPhase('work');
-                  return workTime;
+
+                  setPhase("work");
+                  setTimeLeft(workTime * 1000);
                 }
+              } else {
+                setTimeLeft(newTimeLeft);
               }
-              return prev - 1;
-            });
-          }, 1000);
-        }
-        
-        return () => clearInterval(intervalRef.current);
-      }, [isRunning, isPaused, phase, currentExercise, currentSet, exercises, workTime, restTime, playCountdown, playStart, playFinish]);
-      
-      const startWorkout = () => {
-        setCurrentExercise(0);
-        setCurrentSet(1);
-        setPhase('work');
-        setTimeLeft(workTime);
-        setIsRunning(true);
-        setIsPaused(false);
-        playStart();
-      };
-      
-      const togglePause = () => {
-        setIsPaused(!isPaused);
-      };
-      
-      const stopWorkout = () => {
-        setIsRunning(false);
-        setIsPaused(false);
-        setCurrentExercise(0);
-        setCurrentSet(1);
-        setPhase('work');
-        setTimeLeft(workTime);
-      };
-      
-      const getTotalSets = () => exercises.reduce((sum, ex) => sum + ex.sets, 0);
-      
-      const getCompletedSets = () => {
-        let completed = 0;
-        for (let i = 0; i < currentExercise; i++) {
-          completed += exercises[i].sets;
-        }
-        completed += currentSet - 1;
-        if (phase === 'rest') completed += 1;
-        return completed;
-      };
-      
-      const getProgress = () => {
-        const total = phase === 'work' ? workTime : restTime;
-        return ((total - timeLeft) / total) * 100;
-      };
-      
-      const handleImageUpload = (exerciseId, event) => {
-        const file = event.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setExercises(prev => prev.map(ex => 
-              ex.id === exerciseId ? { ...ex, image: reader.result } : ex
-            ));
-          };
-          reader.readAsDataURL(file);
-        }
-      };
-      
-      const updateExercise = (exerciseId, updates) => {
-        setExercises(prev => prev.map(ex =>
-          ex.id === exerciseId ? { ...ex, ...updates } : ex
-        ));
-      };
-      
-      const deleteExercise = (exerciseId) => {
-        setExercises(prev => prev.filter(ex => ex.id !== exerciseId));
-        setEditingExercise(null);
-      };
-      
-      const addExercise = () => {
-        const newId = Math.max(...exercises.map(e => e.id), 0) + 1;
-        setExercises(prev => [...prev, {
-          id: newId,
-          name: "New Exercise",
-          grip: "20mm",
-          sets: 2,
-          image: null
-        }]);
-      };
-      
-      if (!audioReady) {
-        return (
-          <div className="audio-init">
-            <div className="audio-init-content">
-              <h2>Hangboard Timer</h2>
-              <p>Tap to enable audio cues</p>
-              <button className="btn btn-primary" onClick={initAudio} style={{width: '200px'}}>
-                Start
-              </button>
+            }, 50);
+          }
+
+          return () => clearInterval(intervalRef.current);
+        }, [
+          isRunning,
+          isPaused,
+          phase,
+          currentExercise,
+          currentSet,
+          exercises,
+          workTime,
+          restTime,
+          timeLeft,
+        ]);
+
+        const startWorkout = () => {
+          setCurrentExercise(0);
+          setCurrentSet(1);
+          setPhase("work");
+          setTimeLeft(workTime * 1000);
+          setIsRunning(true);
+          setIsPaused(false);
+        };
+
+        const togglePause = () => {
+          setIsPaused(!isPaused);
+        };
+
+        const stopWorkout = () => {
+          setIsRunning(false);
+          setIsPaused(false);
+          setCurrentExercise(0);
+          setCurrentSet(1);
+          setPhase("work");
+          setTimeLeft(workTime * 1000);
+        };
+
+        const getTotalSets = () =>
+          exercises.reduce((sum, ex) => sum + ex.sets, 0);
+
+        const getCompletedSets = () => {
+          let completed = 0;
+          for (let i = 0; i < currentExercise; i++) {
+            completed += exercises[i].sets;
+          }
+          completed += currentSet - 1;
+          if (phase === "rest") completed += 1;
+          return completed;
+        };
+
+        const getProgress = () => {
+          const total = (phase === "work" ? workTime : restTime) * 1000;
+          return ((total - timeLeft) / total) * 100;
+        };
+
+        const formatSeconds = (ms) => {
+          return Math.ceil(ms / 1000);
+        };
+
+        const formatTenths = (ms) => {
+          return Math.floor((ms % 1000) / 100);
+        };
+
+        const getTotalWorkoutTime = () => {
+          const totalSets = getTotalSets();
+          const totalWorkSeconds = totalSets * workTime;
+          const totalRestSeconds = (totalSets - 1) * restTime;
+          const totalSeconds = totalWorkSeconds + totalRestSeconds;
+          const minutes = Math.floor(totalSeconds / 60);
+          const seconds = totalSeconds % 60;
+          return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+        };
+
+        const handleImageUpload = (exerciseId, event) => {
+          const file = event.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setExercises((prev) =>
+                prev.map((ex) =>
+                  ex.id === exerciseId ? { ...ex, image: reader.result } : ex,
+                ),
+              );
+            };
+            reader.readAsDataURL(file);
+          }
+        };
+
+        const updateExercise = (exerciseId, updates) => {
+          setExercises((prev) =>
+            prev.map((ex) =>
+              ex.id === exerciseId ? { ...ex, ...updates } : ex,
+            ),
+          );
+        };
+
+        const deleteExercise = (exerciseId) => {
+          setExercises((prev) => prev.filter((ex) => ex.id !== exerciseId));
+          setEditingExercise(null);
+        };
+
+        const addExercise = () => {
+          const newId = Math.max(...exercises.map((e) => e.id), 0) + 1;
+          setExercises((prev) => [
+            ...prev,
+            {
+              id: newId,
+              name: "New Exercise",
+              grip: "20mm",
+              sets: 2,
+              image: null,
+            },
+          ]);
+        };
+
+        // Check if timer is actively running (not paused)
+        const isActiveTimer = isRunning && !isPaused;
+
+        // Fullscreen timer layout
+        const renderFullscreenTimer = () => (
+          <div
+            className={`timer-container fullscreen-timer ${phase === "work" ? "working" : "resting"}`}
+          >
+            {/* Top section: Exercise name, grip, image */}
+            <div className="timer-top">
+              <div className="current-exercise fullscreen-title">
+                {exercises[currentExercise]?.name}
+              </div>
+              <div className="grip-label">
+                {exercises[currentExercise]?.grip}
+              </div>
+              {exercises[currentExercise]?.image ? (
+                <img
+                  src={exercises[currentExercise].image}
+                  alt=""
+                  className="exercise-image fullscreen-image"
+                />
+              ) : (
+                <div className="exercise-image-placeholder fullscreen-image">
+                  No image
+                </div>
+              )}
+            </div>
+
+            {/* Middle section: Set info, phase, timer */}
+            <div className="timer-middle">
+              <div className="set-info fullscreen-set">
+                Set {currentSet} of {exercises[currentExercise]?.sets}
+              </div>
+              <div className={`phase-label fullscreen-phase ${phase}`}>
+                {phase === "work" ? "HANG" : "REST"}
+              </div>
+              <div className="timer-display fullscreen-time">
+                <span className="timer-seconds">{formatSeconds(timeLeft)}</span>
+                <span className="timer-tenths fullscreen-tenths">
+                  .{formatTenths(timeLeft)}
+                </span>
+              </div>
+            </div>
+
+            {/* Bottom section: Progress bar, sets complete */}
+            <div className="timer-bottom">
+              <div className="progress-bar fullscreen-progress">
+                <div
+                  className={`progress-fill ${phase}`}
+                  style={{ width: `${getProgress()}%` }}
+                />
+              </div>
+              <div className="overall-progress fullscreen-overall">
+                {getCompletedSets()} / {getTotalSets()} sets complete
+              </div>
             </div>
           </div>
         );
-      }
-      
-      return (
-        <div className="app">
-          <div className="header">
-            <h1>Hangboard Timer</h1>
-            <p>40% max · {workTime}s work · {restTime}s rest</p>
-          </div>
-          
-          <div className="tabs">
-            <button 
-              className={`tab ${activeTab === 'timer' ? 'active' : ''}`}
-              onClick={() => setActiveTab('timer')}
-            >
-              Timer
-            </button>
-            <button 
-              className={`tab ${activeTab === 'exercises' ? 'active' : ''}`}
-              onClick={() => setActiveTab('exercises')}
-            >
-              Exercises
-            </button>
-            <button 
-              className={`tab ${activeTab === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('settings')}
-            >
-              Settings
-            </button>
-          </div>
-          
-          {activeTab === 'timer' && (
-            <>
-              <div className={`timer-container ${isRunning ? (phase === 'work' ? 'working' : 'resting') : ''}`}>
-                {isRunning && exercises[currentExercise]?.image ? (
-                  <img src={exercises[currentExercise].image} alt="" className="exercise-image" />
-                ) : isRunning ? (
-                  <div className="exercise-image-placeholder">No image</div>
-                ) : null}
-                
-                <div className="current-exercise">
-                  {isRunning ? exercises[currentExercise]?.name : 'Ready'}
-                </div>
-                
-                <div className="set-info">
-                  {isRunning 
-                    ? `Set ${currentSet} of ${exercises[currentExercise]?.sets} · ${exercises[currentExercise]?.grip}`
-                    : `${exercises.length} exercises · ${getTotalSets()} total sets`
-                  }
-                </div>
-                
-                <div className={`phase-label ${phase}`}>
-                  {isRunning ? (phase === 'work' ? 'HANG' : 'REST') : 'READY'}
-                </div>
-                
-                <div className="timer-display">
-                  {timeLeft}
-                </div>
-                
-                {isRunning && (
-                  <div className="progress-bar">
-                    <div 
-                      className={`progress-fill ${phase}`}
-                      style={{ width: `${getProgress()}%` }}
-                    />
-                  </div>
-                )}
-                
-                <div className="overall-progress">
-                  {isRunning 
-                    ? `${getCompletedSets()} / ${getTotalSets()} sets complete`
-                    : 'Tap Start to begin'
-                  }
-                </div>
-              </div>
-              
-              <div className="controls">
-                {!isRunning ? (
-                  <button className="btn btn-primary" onClick={startWorkout}>
-                    Start Workout
-                  </button>
+
+        return (
+          <div className={`app ${isActiveTimer ? "fullscreen" : ""}`}>
+            {/* Header - hidden when timer active */}
+            <div className={`header ${isActiveTimer ? "hidden" : ""}`}>
+              <h1>Hangboard Timer</h1>
+              <p>
+                40% max · {workTime}s work · {restTime}s rest
+              </p>
+            </div>
+
+            {/* Tabs - hidden when timer active */}
+            <div className={`tabs ${isActiveTimer ? "hidden" : ""}`}>
+              <button
+                className={`tab ${activeTab === "timer" ? "active" : ""}`}
+                onClick={() => setActiveTab("timer")}
+              >
+                Timer
+              </button>
+              <button
+                className={`tab ${activeTab === "exercises" ? "active" : ""}`}
+                onClick={() => setActiveTab("exercises")}
+              >
+                Exercises
+              </button>
+              <button
+                className={`tab ${activeTab === "settings" ? "active" : ""}`}
+                onClick={() => setActiveTab("settings")}
+              >
+                Settings
+              </button>
+            </div>
+
+            {activeTab === "timer" && (
+              <>
+                {isActiveTimer ? (
+                  renderFullscreenTimer()
                 ) : (
-                  <>
-                    <button className="btn btn-secondary" onClick={togglePause}>
-                      {isPaused ? 'Resume' : 'Pause'}
-                    </button>
-                    <button className="btn btn-danger" onClick={stopWorkout}>
-                      Stop
-                    </button>
-                  </>
-                )}
-              </div>
-              
-              <div className="exercise-list">
-                {exercises.map((exercise, index) => (
-                  <div 
-                    key={exercise.id}
-                    className={`exercise-card ${
-                      isRunning && index === currentExercise ? 'active' : ''
-                    } ${isRunning && index < currentExercise ? 'completed' : ''}`}
+                  <div
+                    className={`timer-container ${isRunning ? (phase === "work" ? "working" : "resting") : ""}`}
                   >
-                    {exercise.image ? (
-                      <img src={exercise.image} alt="" className="exercise-thumb" />
-                    ) : (
-                      <div className="exercise-thumb-placeholder">📷</div>
-                    )}
-                    <div className="exercise-details">
-                      <div className="exercise-name">{exercise.name}</div>
-                      <div className="exercise-meta">{exercise.sets} sets · {exercise.grip}</div>
+                    <div className="current-exercise">
+                      {isRunning ? exercises[currentExercise]?.name : "Ready"}
                     </div>
+
+                    {isRunning && exercises[currentExercise]?.image ? (
+                      <img
+                        src={exercises[currentExercise].image}
+                        alt=""
+                        className="exercise-image"
+                        style={{ margin: "0 auto 16px" }}
+                      />
+                    ) : isRunning ? (
+                      <div className="exercise-image-placeholder">No image</div>
+                    ) : null}
+
+                    <div className="set-info">
+                      {isRunning ? (
+                        <>
+                          Set {currentSet} of {exercises[currentExercise]?.sets}
+                        </>
+                      ) : (
+                        `${exercises.length} exercises · ${getTotalSets()} total sets`
+                      )}
+                    </div>
+
+                    <div className={`phase-label ${phase}`}>
+                      {isRunning
+                        ? phase === "work"
+                          ? "HANG"
+                          : "REST"
+                        : "READY"}
+                    </div>
+
+                    <div className="timer-display">
+                      <span className="timer-seconds">
+                        {formatSeconds(timeLeft)}
+                      </span>
+                      <span className="timer-tenths">
+                        .{formatTenths(timeLeft)}
+                      </span>
+                    </div>
+
                     {isRunning && (
-                      <div className={`exercise-status ${index < currentExercise ? 'done' : ''}`}>
-                        {index < currentExercise ? '✓ Done' : 
-                         index === currentExercise ? `${currentSet}/${exercise.sets}` : 
-                         'Pending'}
+                      <div className="progress-bar">
+                        <div
+                          className={`progress-fill ${phase}`}
+                          style={{ width: `${getProgress()}%` }}
+                        />
+                      </div>
+                    )}
+
+                    <div className="overall-progress">
+                      {isRunning
+                        ? `${getCompletedSets()} / ${getTotalSets()} sets complete`
+                        : "Tap Start to begin"}
+                    </div>
+
+                    {!isRunning && (
+                      <div className="workout-time">
+                        Total time: {getTotalWorkoutTime()}
                       </div>
                     )}
                   </div>
-                ))}
-              </div>
-            </>
-          )}
-          
-          {activeTab === 'exercises' && (
-            <>
-              <div className="exercise-list">
-                {exercises.map((exercise) => (
-                  <div 
-                    key={exercise.id}
-                    className="exercise-card"
-                    onClick={() => setEditingExercise(exercise)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    {exercise.image ? (
-                      <img src={exercise.image} alt="" className="exercise-thumb" />
-                    ) : (
-                      <div className="exercise-thumb-placeholder">📷</div>
-                    )}
-                    <div className="exercise-details">
-                      <div className="exercise-name">{exercise.name}</div>
-                      <div className="exercise-meta">{exercise.sets} sets · {exercise.grip}</div>
-                    </div>
-                    <div className="exercise-status">Edit →</div>
-                  </div>
-                ))}
-              </div>
-              <button className="add-exercise-btn" onClick={addExercise}>
-                + Add Exercise
-              </button>
-            </>
-          )}
-          
-          {activeTab === 'settings' && (
-            <>
-              <div className="settings-section">
-                <div className="settings-title">Timer Settings</div>
-                <div className="setting-row">
-                  <span className="setting-label">Work Time (seconds)</span>
-                  <input 
-                    type="number" 
-                    className="setting-input"
-                    value={workTime}
-                    onChange={(e) => setWorkTime(Math.max(1, parseInt(e.target.value) || 1))}
-                    min="1"
-                  />
-                </div>
-                <div className="setting-row">
-                  <span className="setting-label">Rest Time (seconds)</span>
-                  <input 
-                    type="number" 
-                    className="setting-input"
-                    value={restTime}
-                    onChange={(e) => setRestTime(Math.max(1, parseInt(e.target.value) || 1))}
-                    min="1"
-                  />
-                </div>
-              </div>
-              
-              <div className="settings-section">
-                <div className="settings-title">Reset</div>
-                <button 
-                  className="btn btn-secondary" 
-                  style={{ width: '100%' }}
-                  onClick={() => {
-                    if (confirm('Reset all exercises to defaults?')) {
-                      setExercises(defaultExercises);
-                      setWorkTime(10);
-                      setRestTime(20);
-                    }
-                  }}
+                )}
+
+                <div
+                  className={`controls ${isActiveTimer ? "fullscreen-controls" : ""}`}
                 >
-                  Reset to Defaults
+                  {!isRunning ? (
+                    <button className="btn btn-primary" onClick={startWorkout}>
+                      Start Workout
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        className="btn btn-secondary"
+                        onClick={togglePause}
+                      >
+                        {isPaused ? "Resume" : "Pause"}
+                      </button>
+                      <button className="btn btn-danger" onClick={stopWorkout}>
+                        Stop
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Exercise list - hidden when timer active */}
+                <div
+                  className={`exercise-list ${isActiveTimer ? "hidden" : ""}`}
+                >
+                  {exercises.map((exercise, index) => (
+                    <div
+                      key={exercise.id}
+                      className={`exercise-card ${
+                        isRunning && index === currentExercise ? "active" : ""
+                      } ${isRunning && index < currentExercise ? "completed" : ""}`}
+                    >
+                      {exercise.image ? (
+                        <img
+                          src={exercise.image}
+                          alt=""
+                          className="exercise-thumb"
+                        />
+                      ) : (
+                        <div className="exercise-thumb-placeholder">📷</div>
+                      )}
+                      <div className="exercise-details">
+                        <div className="exercise-name">{exercise.name}</div>
+                        <div className="exercise-meta">
+                          {exercise.sets} sets · {exercise.grip}
+                        </div>
+                      </div>
+                      {isRunning && (
+                        <div
+                          className={`exercise-status ${index < currentExercise ? "done" : ""}`}
+                        >
+                          {index < currentExercise
+                            ? "✓ Done"
+                            : index === currentExercise
+                              ? `${currentSet}/${exercise.sets}`
+                              : "Pending"}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {activeTab === "exercises" && (
+              <>
+                <div className="exercise-list">
+                  {exercises.map((exercise) => (
+                    <div
+                      key={exercise.id}
+                      className="exercise-card"
+                      onClick={() => setEditingExercise(exercise)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {exercise.image ? (
+                        <img
+                          src={exercise.image}
+                          alt=""
+                          className="exercise-thumb"
+                        />
+                      ) : (
+                        <div className="exercise-thumb-placeholder">📷</div>
+                      )}
+                      <div className="exercise-details">
+                        <div className="exercise-name">{exercise.name}</div>
+                        <div className="exercise-meta">
+                          {exercise.sets} sets · {exercise.grip}
+                        </div>
+                      </div>
+                      <div className="exercise-status">Edit →</div>
+                    </div>
+                  ))}
+                </div>
+                <button className="add-exercise-btn" onClick={addExercise}>
+                  + Add Exercise
                 </button>
-              </div>
-            </>
-          )}
-          
-          {editingExercise && (
-            <div className="modal-overlay" onClick={() => setEditingExercise(null)}>
-              <div className="modal" onClick={e => e.stopPropagation()}>
-                <h2>Edit Exercise</h2>
-                
-                <div className="form-group">
-                  <label className="form-label">Exercise Name</label>
-                  <input 
-                    type="text"
-                    className="form-input"
-                    value={editingExercise.name}
-                    onChange={(e) => {
-                      const newName = e.target.value;
-                      setEditingExercise(prev => ({ ...prev, name: newName }));
-                      updateExercise(editingExercise.id, { name: newName });
-                    }}
-                  />
+              </>
+            )}
+
+            {activeTab === "settings" && (
+              <>
+                <div className="settings-section">
+                  <div className="settings-title">Timer Settings</div>
+                  <div className="setting-row">
+                    <span className="setting-label">Work Time (seconds)</span>
+                    <input
+                      type="number"
+                      className="setting-input"
+                      value={workTime}
+                      onChange={(e) =>
+                        setWorkTime(Math.max(1, parseInt(e.target.value) || 1))
+                      }
+                      min="1"
+                    />
+                  </div>
+                  <div className="setting-row">
+                    <span className="setting-label">Rest Time (seconds)</span>
+                    <input
+                      type="number"
+                      className="setting-input"
+                      value={restTime}
+                      onChange={(e) =>
+                        setRestTime(Math.max(1, parseInt(e.target.value) || 1))
+                      }
+                      min="1"
+                    />
+                  </div>
                 </div>
-                
-                <div className="form-group">
-                  <label className="form-label">Grip Size</label>
-                  <input 
-                    type="text"
-                    className="form-input"
-                    value={editingExercise.grip}
-                    onChange={(e) => {
-                      const newGrip = e.target.value;
-                      setEditingExercise(prev => ({ ...prev, grip: newGrip }));
-                      updateExercise(editingExercise.id, { grip: newGrip });
+
+                <div className="settings-section">
+                  <div className="settings-title">Reset</div>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ width: "100%" }}
+                    onClick={() => {
+                      if (confirm("Reset all exercises to defaults?")) {
+                        setExercises(defaultExercises);
+                        setWorkTime(10);
+                        setRestTime(20);
+                      }
                     }}
-                  />
+                  >
+                    Reset to Defaults
+                  </button>
                 </div>
-                
-                <div className="form-group">
-                  <label className="form-label">Number of Sets</label>
-                  <input 
-                    type="number"
-                    className="form-input"
-                    value={editingExercise.sets}
-                    min="1"
-                    onChange={(e) => {
-                      const newSets = Math.max(1, parseInt(e.target.value) || 1);
-                      setEditingExercise(prev => ({ ...prev, sets: newSets }));
-                      updateExercise(editingExercise.id, { sets: newSets });
-                    }}
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label className="form-label">Exercise Image</label>
-                  <label className="image-upload">
-                    {editingExercise.image ? (
-                      <img src={editingExercise.image} alt="" />
-                    ) : (
-                      <span className="image-upload-text">Tap to upload image</span>
-                    )}
-                    <input 
-                      type="file" 
-                      accept="image/*"
-                      style={{ display: 'none' }}
+              </>
+            )}
+
+            {editingExercise && (
+              <div
+                className="modal-overlay"
+                onClick={() => setEditingExercise(null)}
+              >
+                <div className="modal" onClick={(e) => e.stopPropagation()}>
+                  <h2>Edit Exercise</h2>
+
+                  <div className="form-group">
+                    <label className="form-label">Exercise Name</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={editingExercise.name}
                       onChange={(e) => {
-                        handleImageUpload(editingExercise.id, e);
-                        const file = e.target.files[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setEditingExercise(prev => ({ ...prev, image: reader.result }));
-                          };
-                          reader.readAsDataURL(file);
-                        }
+                        const newName = e.target.value;
+                        setEditingExercise((prev) => ({
+                          ...prev,
+                          name: newName,
+                        }));
+                        updateExercise(editingExercise.id, { name: newName });
                       }}
                     />
-                  </label>
-                </div>
-                
-                <div className="modal-actions">
-                  <button 
-                    className="btn btn-danger"
-                    onClick={() => deleteExercise(editingExercise.id)}
-                  >
-                    Delete
-                  </button>
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => setEditingExercise(null)}
-                  >
-                    Done
-                  </button>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Grip Size</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={editingExercise.grip}
+                      onChange={(e) => {
+                        const newGrip = e.target.value;
+                        setEditingExercise((prev) => ({
+                          ...prev,
+                          grip: newGrip,
+                        }));
+                        updateExercise(editingExercise.id, { grip: newGrip });
+                      }}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Number of Sets</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={editingExercise.sets}
+                      min="1"
+                      onChange={(e) => {
+                        const newSets = Math.max(
+                          1,
+                          parseInt(e.target.value) || 1,
+                        );
+                        setEditingExercise((prev) => ({
+                          ...prev,
+                          sets: newSets,
+                        }));
+                        updateExercise(editingExercise.id, { sets: newSets });
+                      }}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Exercise Image</label>
+                    <label className="image-upload">
+                      {editingExercise.image ? (
+                        <img src={editingExercise.image} alt="" />
+                      ) : (
+                        <span className="image-upload-text">
+                          Tap to upload image
+                        </span>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={(e) => {
+                          handleImageUpload(editingExercise.id, e);
+                          const file = e.target.files[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setEditingExercise((prev) => ({
+                                ...prev,
+                                image: reader.result,
+                              }));
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="modal-actions">
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => deleteExercise(editingExercise.id)}
+                    >
+                      Delete
+                    </button>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => setEditingExercise(null)}
+                    >
+                      Done
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-    
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-  </script>
-</body>
+            )}
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
 </html>
