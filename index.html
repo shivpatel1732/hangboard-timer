@@ -49,7 +49,7 @@
 
         /* START PAGE TEXT SIZES - Adjust these for the welcome/start page only */
         --start-header-font: 1.5rem; /* Start page app title size */
-        --start-exercise-title-font: 1.75rem; /* Start page exercise name size */
+        --start-exercise-title-font: 2.5rem; /* Start page exercise name size */
         --start-grip-font: 1.1rem; /* Start page grip size text */
         --start-set-info-font: 1.5rem; /* Start page "Set 1 of 5" text */
 
@@ -93,17 +93,6 @@
         --border-radius-small: 8px; /* Small rounded corners */
       }
       /* ========== END CUSTOMIZE ========== */
-
-      /* Mobile responsive adjustments */
-      @media (max-width: 768px) {
-        :root {
-          --exercise-title-font: 2.5rem;
-          --timer-font: 3rem;
-          --set-info-font: 1.8rem;
-          --grip-font: 1.2rem;
-          --phase-font: 1.5rem;
-        }
-      }
 
       /* Start page text sizing override */
       .app.start-page {
@@ -762,52 +751,10 @@
     <script type="text/babel">
       const { useState, useEffect, useRef } = React;
       const defaultExercises = [
-        {
-          id: 1,
-          name: "Half crimp",
-          grip: "20mm",
-          sets: 6,
-          image:
-            "https://shivpatel1732.github.io/hangboard-timer/half_crimp.jpeg",
-        },
-        {
-          id: 2,
-          name: "Three finger drag",
-          grip: "30mm",
-          sets: 6,
-          image:
-            "https://shivpatel1732.github.io/hangboard-timer/three_finger_drag.jpg",
-        },
-        {
-          id: 3,
-          name: "IM drag",
-          grip: "30mm",
-          sets: 2,
-          image: "https://shivpatel1732.github.io/hangboard-timer/IM_drag.png",
-        },
-        {
-          id: 4,
-          name: "MR drag",
-          grip: "30mm",
-          sets: 2,
-          image: "https://shivpatel1732.github.io/hangboard-timer/MR_drag.png",
-        },
-        {
-          id: 5,
-          name: "IM half crimp",
-          grip: "20mm",
-          sets: 2,
-          image:
-            "https://shivpatel1732.github.io/hangboard-timer/IM_half_crimp.jpeg",
-        },
-        {
-          id: 6,
-          name: "MR half crimp",
-          grip: "20mm",
-          sets: 2,
-          image:
-            "https://shivpatel1732.github.io/hangboard-timer/MR_half_crimp.jpeg",
-        },
+        { id: 1, name: "Half Crimp", grip: "20mm", sets: 5, image: null },
+        { id: 2, name: "Full Crimp", grip: "25mm", sets: 5, image: null },
+        { id: 3, name: "Open Hand", grip: "30mm", sets: 5, image: null },
+        { id: 4, name: "Jug", grip: "45mm", sets: 5, image: null },
       ];
       function App() {
         const [exercises, setExercises] = useState(() => {
