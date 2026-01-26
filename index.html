@@ -35,7 +35,7 @@
         /* TEXT SIZES - Regular (1rem = normal), Fullscreen (larger) */
         --header-font: 1.5rem; /* App title size */
         --exercise-title-font: 1.75rem; /* Exercise name size */
-        --exercise-title-fullscreen: 2rem; /* Exercise name when fullscreen */
+        --exercise-title-fullscreen: 2.5rem; /* Exercise name when fullscreen */
         --timer-font: 5rem; /* Timer numbers size */
         --timer-fullscreen: 5.5rem; /* Timer size when fullscreen */
         --tenths-font: 2.5rem; /* Decimal part of timer */
@@ -47,34 +47,34 @@
         --phase-fullscreen: 2.5rem; /* Phase text when fullscreen */
 
         /* IMAGE SIZES */
-        --image-width: 180px; /* Exercise image width */
-        --image-height: 180px; /* Exercise image height */
+        --image-width: 240px; /* Exercise image width */
+        --image-height: 240px; /* Exercise image height */
         --image-border: 2px; /* Image border thickness */
         --image-fullscreen-width: 90%; /* Full screen image width */
-        --image-fullscreen-height: 45vh; /* Full screen image height */
+        --image-fullscreen-height: 50vh; /* Full screen image height */
         --image-fullscreen-border: 3px; /* Full screen border thickness */
         --thumb-size: 50px; /* Small exercise thumbnail size */
 
         /* SPACING - WHERE THINGS ARE POSITIONED IN THE UI */
         /* Around the main timer box */
-        --container-padding: 24px 5px; /* Space inside the main box (left/right, top/bottom) */
-        --container-margin: 20px; /* Space below the main box before next element */
+        --container-padding: 16px 5px; /* Space inside the main box (left/right, top/bottom) */
+        --container-margin: 12px; /* Space below the main box before next element */
 
         /* Exercise title to image spacing */
-        --space-title-to-image: 5px; /* Gap between exercise name and image */
+        --space-title-to-image: 2px; /* Gap between exercise name and image */
 
         /* Image to next element spacing */
-        --space-image-to-text: 16px; /* Gap below image to "Set 1 of 5" text */
+        --space-image-to-text: 8px; /* Gap below image to "Set 1 of 5" text */
 
         /* Between major sections */
-        --space-sections: 20px; /* Gap between exercise info and timer display */
+        --space-sections: 8px; /* Gap between exercise info and timer display */
 
         /* Between timer and controls */
-        --space-timer-to-controls: 16px; /* Gap between timer number and progress bar */
+        --space-timer-to-controls: 8px; /* Gap between timer number and progress bar */
 
         /* General spacing */
-        --gap-large: 12px; /* Large gap between elements */
-        --gap-small: 8px; /* Small gap between elements */
+        --gap-large: 8px; /* Large gap between elements */
+        --gap-small: 4px; /* Small gap between elements */
 
         /* PROGRESS BAR */
         --progress-height: 8px; /* Progress bar thickness */
@@ -405,18 +405,19 @@
 
       .tabs {
         display: flex;
-        gap: var(--gap-small);
+        gap: 0;
         margin-bottom: var(--container-margin);
-        background: var(--surface);
-        padding: var(--gap-small);
-        border-radius: var(--border-radius-small);
+        background: transparent;
+        padding: 0;
+        border-radius: 0;
+        border-bottom: 1px solid var(--border);
       }
 
       .tab {
         flex: 1;
-        padding: var(--space-title-to-image);
+        padding: 12px 16px;
         border: none;
-        border-radius: var(--border-radius-small);
+        border-radius: 0;
         background: transparent;
         color: var(--text-dim);
         font-family: "Space Grotesk", sans-serif;
@@ -424,11 +425,14 @@
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
       }
 
       .tab.active {
-        background: var(--surface-alt);
-        color: #f5f5f5;
+        background: transparent;
+        color: var(--accent);
+        border-bottom-color: var(--accent);
       }
 
       .exercise-list {
@@ -882,6 +886,26 @@
             },
           ]);
         };
+        const isLastSetOfExercise = () =>
+          currentSet >= exercises[currentExercise]?.sets;
+        const isFinalRest = () => phase === "rest" && isLastSetOfExercise();
+        const getNextExerciseIndex = () => {
+          if (currentExercise < exercises.length - 1) {
+            return currentExercise + 1;
+          }
+          return null;
+        };
+        const getDisplayExerciseIndex = () => {
+          return isFinalRest() && getNextExerciseIndex() !== null
+            ? getNextExerciseIndex()
+            : currentExercise;
+        };
+        const getDisplaySetInfo = () => {
+          if (isFinalRest() && getNextExerciseIndex() !== null) {
+            return "GET READY";
+          }
+          return `Set ${currentSet} of ${exercises[currentExercise]?.sets}`;
+        };
         const isActiveTimer = isRunning && !isPaused;
         const renderFullscreenTimer = () => {
           const cc =
@@ -890,23 +914,26 @@
               : phase === "work"
                 ? "working"
                 : "resting";
+          const displayExIdx = getDisplayExerciseIndex();
           return (
             <div className={`timer-container fullscreen-timer ${cc}`}>
               <div className="timer-content">
                 <div className="current-exercise fullscreen-title">
-                  {exercises[currentExercise]?.name}
+                  {exercises[displayExIdx]?.name}
                 </div>
                 <div className="grip-label fullscreen-grip">
-                  {exercises[currentExercise]?.grip}
+                  {exercises[displayExIdx]?.grip}
                 </div>
-                {exercises[currentExercise]?.image && (
+                {exercises[displayExIdx]?.image && (
                   <img
-                    src={exercises[currentExercise].image}
+                    src={exercises[displayExIdx].image}
                     className="exercise-image fullscreen-image"
                   />
                 )}
                 <div className="set-info fullscreen-set">
-                  Set {currentSet} of {exercises[currentExercise]?.sets}
+                  {isFinalRest() && getNextExerciseIndex() !== null
+                    ? "GET READY"
+                    : `Set ${currentSet} of ${exercises[currentExercise]?.sets}`}
                 </div>
                 <div className={`phase-label fullscreen-phase ${phase}`}>
                   {phase === "countdown"
@@ -971,18 +998,23 @@
                     className={`timer-container ${isRunning ? (phase === "work" ? "working" : "resting") : ""}`}
                   >
                     <div className="current-exercise">
-                      {isRunning ? exercises[currentExercise]?.name : "Ready"}
+                      {isRunning
+                        ? exercises[getDisplayExerciseIndex()]?.name
+                        : "Ready"}
                     </div>
-                    {isRunning && exercises[currentExercise]?.image && (
-                      <img
-                        src={exercises[currentExercise].image}
-                        className="exercise-image"
-                      />
-                    )}
+                    {isRunning &&
+                      exercises[getDisplayExerciseIndex()]?.image && (
+                        <img
+                          src={exercises[getDisplayExerciseIndex()].image}
+                          className="exercise-image"
+                        />
+                      )}
                     <div className="set-info">
                       {isRunning ? (
                         <>
-                          Set {currentSet} of {exercises[currentExercise]?.sets}
+                          {isFinalRest() && getNextExerciseIndex() !== null
+                            ? "GET READY"
+                            : `Set ${currentSet} of ${exercises[currentExercise]?.sets}`}
                         </>
                       ) : (
                         `${exercises.length} exercises · ${getTotalSets()} total sets`
