@@ -169,12 +169,8 @@
     }
     
     .exercise-image.fullscreen-image {
-      width: 300px;
-      height: 400px;
-      min-width: 300px;
-      min-height: 400px;
-      max-width: 300px;
-      max-height: 400px;
+      width: 90%;
+      max-height: 45vh;
       border-radius: 16px;
       margin: 0;
       border: 3px solid var(--border);
@@ -196,12 +192,8 @@
     }
     
     .exercise-image-placeholder.fullscreen-image {
-      width: 300px;
-      height: 400px;
-      min-width: 300px;
-      min-height: 400px;
-      max-width: 300px;
-      max-height: 400px;
+      width: 90%;
+      max-height: 45vh;
       border-radius: 16px;
       margin: 0;
       flex-shrink: 0;
@@ -640,49 +632,19 @@
     
     /* Responsive - smaller screens */
     @media (max-height: 700px) {
-      .timer-display.fullscreen-time {
-        font-size: 4.5rem;
-      }
-      .timer-tenths.fullscreen-tenths {
-        font-size: 2.25rem;
-      }
+      .timer-display.fullscreen-time { font-size: 4.5rem; }
+      .timer-tenths.fullscreen-tenths { font-size: 2.25rem; }
       .exercise-image.fullscreen-image,
-      .exercise-image-placeholder.fullscreen-image {
-        width: 200px;
-        height: 260px;
-        min-width: 200px;
-        min-height: 260px;
-        max-width: 200px;
-        max-height: 260px;
-      }
-      .current-exercise.fullscreen-title {
-        font-size: 1.5rem;
-      }
-      .set-info.fullscreen-set {
-        font-size: 1.2rem;
-      }
+      .exercise-image-placeholder.fullscreen-image { max-height: 35vh; }
+      .current-exercise.fullscreen-title { font-size: 1.5rem; }
+      .set-info.fullscreen-set { font-size: 1.2rem; }
     }
     
     /* Larger screens */
     @media (min-height: 850px) {
-      .timer-display.fullscreen-time {
-        font-size: 6.5rem;
-      }
-      .timer-tenths.fullscreen-tenths {
-        font-size: 3.25rem;
-      }
-      .exercise-image.fullscreen-image,
-      .exercise-image-placeholder.fullscreen-image {
-        width: 350px;
-        height: 460px;
-        min-width: 350px;
-        min-height: 460px;
-        max-width: 350px;
-        max-height: 460px;
-      }
-      .current-exercise.fullscreen-title {
-        font-size: 2.25rem;
-      }
+      .timer-display.fullscreen-time { font-size: 6.5rem; }
+      .timer-tenths.fullscreen-tenths { font-size: 3.25rem; }
+      .current-exercise.fullscreen-title { font-size: 2.25rem; }
     }
   </style>
 </head>
@@ -976,7 +938,7 @@
             </div>
             
             {exercises[currentExercise]?.image ? (
-              <img src={exercises[currentExercise].image} alt="" className="exercise-image fullscreen-image" width="300" height="400" />
+              <img src={exercises[currentExercise].image} alt="" className="exercise-image fullscreen-image" />
             ) : (
               <div className="exercise-image-placeholder fullscreen-image">No image</div>
             )}
