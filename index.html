@@ -33,18 +33,25 @@
         --text-dim: #777; /* Dimmer text/labels */
 
         /* TEXT SIZES - Regular (1rem = normal), Fullscreen (larger) */
+        /* WORKOUT PAGE TEXT SIZES */
         --header-font: 1.5rem; /* App title size */
-        --exercise-title-font: 1.75rem; /* Exercise name size */
-        --exercise-title-fullscreen: 2.5rem; /* Exercise name when fullscreen */
+        --exercise-title-font: 5.75rem; /* Exercise name size */
+        --exercise-title-fullscreen: 5.5rem; /* Exercise name when fullscreen */
         --timer-font: 5rem; /* Timer numbers size */
         --timer-fullscreen: 5.5rem; /* Timer size when fullscreen */
         --tenths-font: 2.5rem; /* Decimal part of timer */
         --tenths-fullscreen: 2.75rem; /* Decimal when fullscreen */
-        --grip-font: 1.5rem; /* Grip size text */
-        --set-info-font: 1.5rem; /* "Set 1 of 5" text */
-        --set-info-fullscreen: 2rem; /* Set info when fullscreen */
+        --grip-font: 2rem; /* Grip size text */
+        --set-info-font: 5.5rem; /* "Set 1 of 5" text */
+        --set-info-fullscreen: 1.4rem; /* Set info when fullscreen */
         --phase-font: 2.5rem; /* "HANG" / "REST" text */
         --phase-fullscreen: 2.5rem; /* Phase text when fullscreen */
+
+        /* START PAGE TEXT SIZES - Adjust these for the welcome/start page only */
+        --start-header-font: 1.5rem; /* Start page app title size */
+        --start-exercise-title-font: 1.75rem; /* Start page exercise name size */
+        --start-grip-font: 1.1rem; /* Start page grip size text */
+        --start-set-info-font: 1.5rem; /* Start page "Set 1 of 5" text */
 
         /* IMAGE SIZES */
         --image-width: 240px; /* Exercise image width */
@@ -86,6 +93,14 @@
         --border-radius-small: 8px; /* Small rounded corners */
       }
       /* ========== END CUSTOMIZE ========== */
+
+      /* Start page text sizing override */
+      .app.start-page {
+        --header-font: var(--start-header-font) !important;
+        --exercise-title-font: var(--start-exercise-title-font) !important;
+        --grip-font: var(--start-grip-font) !important;
+        --set-info-font: var(--start-set-info-font) !important;
+      }
 
       * {
         margin: 0;
@@ -736,10 +751,52 @@
     <script type="text/babel">
       const { useState, useEffect, useRef } = React;
       const defaultExercises = [
-        { id: 1, name: "Half Crimp", grip: "20mm", sets: 5, image: null },
-        { id: 2, name: "Full Crimp", grip: "25mm", sets: 5, image: null },
-        { id: 3, name: "Open Hand", grip: "30mm", sets: 5, image: null },
-        { id: 4, name: "Jug", grip: "45mm", sets: 5, image: null },
+        {
+          id: 1,
+          name: "Half crimp",
+          grip: "20mm",
+          sets: 6,
+          image:
+            "https://shivpatel1732.github.io/hangboard-timer/half_crimp.jpeg",
+        },
+        {
+          id: 2,
+          name: "Three finger drag",
+          grip: "30mm",
+          sets: 6,
+          image:
+            "https://shivpatel1732.github.io/hangboard-timer/three_finger_drag.jpg",
+        },
+        {
+          id: 3,
+          name: "IM drag",
+          grip: "30mm",
+          sets: 2,
+          image: "https://shivpatel1732.github.io/hangboard-timer/IM_drag.png",
+        },
+        {
+          id: 4,
+          name: "MR drag",
+          grip: "30mm",
+          sets: 2,
+          image: "https://shivpatel1732.github.io/hangboard-timer/MR_drag.png",
+        },
+        {
+          id: 5,
+          name: "IM half crimp",
+          grip: "20mm",
+          sets: 2,
+          image:
+            "https://shivpatel1732.github.io/hangboard-timer/IM_half_crimp.jpeg",
+        },
+        {
+          id: 6,
+          name: "MR half crimp",
+          grip: "20mm",
+          sets: 2,
+          image:
+            "https://shivpatel1732.github.io/hangboard-timer/MR_half_crimp.jpeg",
+        },
       ];
       function App() {
         const [exercises, setExercises] = useState(() => {
@@ -1033,7 +1090,9 @@
           );
         };
         return (
-          <div className={`app ${isActiveTimer ? "fullscreen" : ""}`}>
+          <div
+            className={`app ${isActiveTimer ? "fullscreen" : ""} ${!isRunning ? "start-page" : ""}`}
+          >
             <div className={`header ${isActiveTimer ? "hidden" : ""}`}>
               <h1>Hangboard Timer</h1>
               <p>
