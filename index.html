@@ -493,11 +493,63 @@
         border-radius: 6px;
         background: var(--surface-alt);
         color: var(--text-dim);
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .exercise-status:hover {
+        color: var(--accent);
+        border-color: var(--accent);
       }
 
       .exercise-status.done {
         background: rgba(74, 222, 128, 0.1);
         color: var(--success);
+      }
+
+      .exercise-card.editable {
+        justify-content: space-between;
+      }
+
+      .exercise-card.editable .exercise-details {
+        flex: 1;
+      }
+
+      .exercise-move-buttons {
+        display: flex;
+        gap: var(--gap-small);
+        flex-shrink: 0;
+      }
+
+      .move-btn {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: 1px solid var(--border);
+        border-radius: var(--border-radius-small);
+        background: var(--surface-alt);
+        color: var(--text-dim);
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .move-btn:hover:not(:disabled) {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+
+      .move-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
       }
 
       .settings-section {
@@ -873,6 +925,25 @@
           setExercises((prev) => prev.filter((ex) => ex.id !== exId));
           setEditingExercise(null);
         };
+        const moveExercise = (exId, direction) => {
+          setExercises((prev) => {
+            const idx = prev.findIndex((ex) => ex.id === exId);
+            if (idx === -1) return prev;
+            const newExercises = [...prev];
+            if (direction === "up" && idx > 0) {
+              [newExercises[idx], newExercises[idx - 1]] = [
+                newExercises[idx - 1],
+                newExercises[idx],
+              ];
+            } else if (direction === "down" && idx < newExercises.length - 1) {
+              [newExercises[idx], newExercises[idx + 1]] = [
+                newExercises[idx + 1],
+                newExercises[idx],
+              ];
+            }
+            return newExercises;
+          });
+        };
         const addExercise = () => {
           const nId = Math.max(...exercises.map((e) => e.id), 0) + 1;
           setExercises((prev) => [
@@ -1116,22 +1187,44 @@
             {activeTab === "exercises" && (
               <>
                 <div className="exercise-list">
-                  {exercises.map((ex) => (
-                    <div
-                      key={ex.id}
-                      className="exercise-card"
-                      onClick={() => setEditingExercise(ex)}
-                    >
+                  {exercises.map((ex, idx) => (
+                    <div key={ex.id} className="exercise-card editable">
                       {ex.image && (
                         <img src={ex.image} className="exercise-thumb" />
                       )}
-                      <div className="exercise-details">
+                      <div
+                        className="exercise-details"
+                        onClick={() => setEditingExercise(ex)}
+                      >
                         <div className="exercise-name">{ex.name}</div>
                         <div className="exercise-meta">
                           {ex.sets} sets · {ex.grip}
                         </div>
                       </div>
-                      <div className="exercise-status">Edit →</div>
+                      <div className="exercise-move-buttons">
+                        <button
+                          className="move-btn"
+                          onClick={() => moveExercise(ex.id, "up")}
+                          disabled={idx === 0}
+                          title="Move up"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          className="move-btn"
+                          onClick={() => moveExercise(ex.id, "down")}
+                          disabled={idx === exercises.length - 1}
+                          title="Move down"
+                        >
+                          ↓
+                        </button>
+                        <button
+                          className="exercise-status"
+                          onClick={() => setEditingExercise(ex)}
+                        >
+                          Edit →
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
